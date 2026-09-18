@@ -1,7 +1,13 @@
 import type { Locator, Page } from "playwright";
 import type { LocatorChain, LocatorStrategy } from "../artifact/schema.js";
 
-const ATTEMPT_TIMEOUT_MS = 2000;
+// 2000ms was too tight in practice: live discovery logs showed a `fill`
+// occasionally miss on its first attempt right after a form-submit redirect
+// (server-rendered page, no client JS — the miss is Playwright's own
+// load/attach timing, not the app being genuinely slow) and succeed a few
+// seconds later on model retry. Widened rather than papered over by adding
+// artificial delay elsewhere.
+const ATTEMPT_TIMEOUT_MS = 4000;
 
 /**
  * The single locator resolver shared by discovery-time verification and

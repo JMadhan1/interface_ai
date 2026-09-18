@@ -9,6 +9,7 @@ import type { AllowlistConfig } from "../safety/allowlist.js";
 import type { ActionStep, Capability, InputParam, OutputSpec } from "../artifact/schema.js";
 import { RunLogger } from "../logging/logger.js";
 import { raiseIntervention } from "../escalation/handoff.js";
+import { evaluateCheckpoint } from "../replay/checkpoint.js";
 
 export interface DiscoveryResult {
   outcome: "completed" | "escalated" | "stopped";
@@ -32,7 +33,7 @@ export async function runDiscovery(opts: {
 }): Promise<DiscoveryResult> {
   const runId = `discover_${nanoid(8)}`;
   const logger = new RunLogger(`${opts.evidenceDir}/${runId}/log.jsonl`, runId);
-  const model = opts.model ?? "llama-3.3-70b-versatile";
+  const model = opts.model ?? "openai/gpt-oss-120b";
   const maxSteps = opts.maxSteps ?? 25;
   const groq = new Groq({ apiKey: opts.groqApiKey });
   const driver = new SurfaceDriver(opts.page, opts.allowlist);
@@ -58,13 +59,15 @@ export async function runDiscovery(opts: {
     });
     logger.info("observation", { step: i, url: obs.url, title: obs.title });
 
-    const completion = await groq.chat.completions.create({
-      model,
-      messages,
-      tools: AGENT_TOOLS as any,
-      tool_choice: "required",
-      temperature: 0.1,
-    });
+    let completion;
+    try {
+      completion = await callGroqWithRetry(groq, { model, messages, tools: AGENT_TOOLS as any, tool_choice: "required", temperature: 0.1 }, logger);
+    } catch (err: any) {
+      const synthesized = trySynthesizeFinishFromFailedGeneration(err);
+      if (!synthesized) throw err;
+      logger.warn("synthesized_finish_from_failed_generation", { raw: err?.error?.error?.failed_generation });
+      completion = synthesized;
+    }
 
     const choice = completion.choices[0];
     const toolCall = choice?.message?.tool_calls?.[0];
@@ -85,6 +88,24 @@ export async function runDiscovery(opts: {
     logger.info("tool_call", { step: i, name, args });
 
     if (name === "finish") {
+      // Never trust the model's self-reported checkpoint blindly — verify it
+      // against the *current* live page before accepting it. Observed in
+      // practice: the model read the confirmation, then navigated elsewhere
+      // to fetch a value for the final answer, then called finish still
+      // citing the confirmation text — which was no longer on screen. A
+      // capability recorded with an unverified checkpoint would never
+      // actually satisfy it on replay, since replay checks it against
+      // whatever page the LAST recorded step actually lands on.
+      const checkpointHolds = await evaluateCheckpoint(opts.page, { kind: "textPresent", text: args.successCheckpointText || "" });
+      if (!checkpointHolds) {
+        logger.warn("finish_checkpoint_not_live", { claimed: args.successCheckpointText, currentUrl: opts.page.url() });
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: `ERROR: successCheckpointText "${args.successCheckpointText}" is not present on the current page (${opts.page.url()}). If you navigated away after completing the goal, either navigate back to the confirming page before finishing, or cite checkpoint text that is actually visible right now.`,
+        });
+        continue;
+      }
       const outputKeys = Object.keys(args.outputs ?? outputsCollected);
       const outputs: OutputSpec[] = outputKeys.map((k) => ({
         name: k,
@@ -209,4 +230,66 @@ async function executeTool(
 
 function summarizeGoalAsName(goal: string): string {
   return goal.length > 60 ? goal.slice(0, 57) + "..." : goal;
+}
+
+/**
+ * Groq's `tool_choice: "required"` sometimes rejects a generation outright
+ * (400 `tool_use_failed`) even when the model's intent is completely clear —
+ * observed in practice at the very end of a successful run, where the model
+ * produced well-formed `finish` arguments as raw content instead of a proper
+ * tool call, and Groq refused the response rather than returning it. Rather
+ * than losing an otherwise-successful discovery run to an API-level
+ * formatting quirk, recover narrowly: only when the rejected generation
+ * parses as JSON containing `successCheckpointText` (a field unique to the
+ * `finish` tool's schema) do we treat it as an implicit finish call. Any
+ * other shape is not guessed at — this is not a general error swallower.
+ */
+export function trySynthesizeFinishFromFailedGeneration(err: any): any | null {
+  const code = err?.error?.error?.code;
+  const failedGeneration = err?.error?.error?.failed_generation;
+  if (code !== "tool_use_failed" || typeof failedGeneration !== "string") return null;
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(failedGeneration);
+  } catch {
+    return null;
+  }
+  if (typeof parsed?.successCheckpointText !== "string") return null;
+
+  const toolCall = {
+    id: `synthesized_${Date.now()}`,
+    type: "function",
+    function: { name: "finish", arguments: JSON.stringify(parsed) },
+  };
+  return { choices: [{ message: { role: "assistant", content: null, tool_calls: [toolCall] } }] };
+}
+
+/**
+ * Groq's free/on-demand tier has a low tokens-per-minute ceiling, and this
+ * loop resends the full growing message history every turn — a long
+ * discovery run WILL hit 429s in practice, not just in theory (this is not
+ * hypothetical: it happened during development of this exact capability).
+ * Honor the API's own `retry-after` when given, otherwise back off
+ * exponentially; anything else (a real auth/schema error) is not retried.
+ */
+async function callGroqWithRetry(
+  groq: Groq,
+  params: { model: string; messages: any[]; tools: any; tool_choice: "required"; temperature: number },
+  logger: RunLogger,
+  maxAttempts = 6
+) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await groq.chat.completions.create(params);
+    } catch (err: any) {
+      const status = err?.status;
+      if (status !== 429 || attempt === maxAttempts) throw err;
+      const retryAfterHeader = err?.headers?.["retry-after"];
+      const waitMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : Math.min(2000 * 2 ** (attempt - 1), 30000);
+      logger.warn("groq_rate_limited_retrying", { attempt, maxAttempts, waitMs });
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+  }
+  throw new Error("unreachable");
 }

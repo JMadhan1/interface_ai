@@ -29,7 +29,7 @@ program
   .requiredOption("--goal <text>", "natural language goal")
   .option("--tenant <slug>", "target tenant", "tenant-a")
   .option("--base-url <url>", "mock app base URL", "http://localhost:4100")
-  .option("--model <model>", "Groq model id", "llama-3.3-70b-versatile")
+  .option("--model <model>", "Groq model id", "openai/gpt-oss-120b")
   .option("--max-steps <n>", "max discovery steps", "25")
   .option("--param <key=value...>", "literal->param name mapping to parameterize, e.g. memberId=12345", (v, acc: string[]) => [...acc, v], [])
   .option("--auto-resume-escalations", "don't block on human input if the agent escalates (for CI)", false)

@@ -1,0 +1,147 @@
+<svg viewBox="0 0 1160 760" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="A capability is discovered once by an LLM loop, curated into a typed artifact, then replayed with no model: before every step the executor checks the page in sequence — business outcome, then recoverable condition, then runs the step — branching to a terminal business-outcome or hard-failure result, or looping back after a recovery. Escalation pauses automation and hands the same live browser session to a human, then resumes.">
+  <title>Discovery, artifact, and the replay decision mechanism</title>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#15803d"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1160" height="760" fill="#ffffff"/>
+  <text x="24" y="30" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="16" font-weight="700" fill="#0f172a">Discover once → typed artifact → replay with no model in the loop</text>
+
+  <!-- ================= TOP ROW: discover → artifact → drives replay ================= -->
+  <g font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+    <rect x="24" y="56" width="230" height="118" rx="8" fill="none" stroke="#334155" stroke-width="1.4"/>
+    <text x="139" y="78" font-size="13" font-weight="700" text-anchor="middle" fill="#0f172a">Discovery loop (LLM)</text>
+
+    <circle cx="80" cy="120" r="21" fill="none" stroke="#334155" stroke-width="1.3"/>
+    <text x="80" y="124" font-size="10.5" text-anchor="middle" fill="#0f172a">observe</text>
+    <circle cx="139" cy="144" r="21" fill="none" stroke="#334155" stroke-width="1.3"/>
+    <text x="139" y="148" font-size="10.5" text-anchor="middle" fill="#0f172a">decide</text>
+    <circle cx="198" cy="120" r="21" fill="none" stroke="#334155" stroke-width="1.3"/>
+    <text x="198" y="124" font-size="10.5" text-anchor="middle" fill="#0f172a">act</text>
+
+    <line x1="98" y1="130" x2="121" y2="138" stroke="#334155" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <line x1="157" y1="136" x2="180" y2="128" stroke="#334155" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <path d="M 191 102 A 58 58 0 0 0 87 102" fill="none" stroke="#334155" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="139" y="164" font-size="9" text-anchor="middle" fill="#475569">repeats until finish() / request_human()</text>
+  </g>
+
+  <line x1="254" y1="115" x2="300" y2="115" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <text x="277" y="107" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" text-anchor="middle" fill="#475569">records</text>
+
+  <g font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+    <rect x="300" y="56" width="230" height="118" rx="8" fill="none" stroke="#0f172a" stroke-width="1.6"/>
+    <text x="415" y="78" font-size="13" font-weight="700" text-anchor="middle" fill="#0f172a">Capability artifact</text>
+    <text x="415" y="98" font-size="10.5" text-anchor="middle" fill="#334155">steps + locator fallback chains</text>
+    <text x="415" y="114" font-size="10.5" text-anchor="middle" fill="#334155">typed params / outputs / checkpoint</text>
+    <text x="415" y="130" font-size="10.5" text-anchor="middle" fill="#334155">known interstitials + business outcomes</text>
+    <text x="415" y="153" font-size="9.5" text-anchor="middle" fill="#64748b">curated after discovery — a happy-path run</text>
+    <text x="415" y="166" font-size="9.5" text-anchor="middle" fill="#64748b">alone can't discover "not found" itself</text>
+  </g>
+
+  <line x1="530" y1="115" x2="576" y2="115" stroke="#334155" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <text x="553" y="107" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="10" text-anchor="middle" fill="#475569">loads</text>
+
+  <g font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+    <rect x="576" y="56" width="230" height="118" rx="8" fill="none" stroke="#334155" stroke-width="1.4"/>
+    <text x="691" y="78" font-size="13" font-weight="700" text-anchor="middle" fill="#0f172a">Replay executor</text>
+    <text x="691" y="98" font-size="10.5" text-anchor="middle" fill="#334155">no LLM — re-resolves each</text>
+    <text x="691" y="114" font-size="10.5" text-anchor="middle" fill="#334155">recorded locator chain</text>
+    <text x="691" y="138" font-size="10" font-weight="600" text-anchor="middle" fill="#0f172a">the check made before every step ↓</text>
+  </g>
+
+  <!-- ================= MIDDLE: the replay decision mechanism ================= -->
+  <text x="24" y="215" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#0f172a">Before each step, in order:</text>
+
+  <g font-family="'Segoe UI',Helvetica,Arial,sans-serif">
+    <line x1="700" y1="174" x2="220" y2="230" stroke="#334155" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+    <!-- Row 1: business outcome check -->
+    <rect x="120" y="230" width="220" height="54" rx="7" fill="none" stroke="#0f172a" stroke-width="1.4"/>
+    <text x="230" y="252" font-size="11" font-weight="600" text-anchor="middle" fill="#0f172a">does the page match a</text>
+    <text x="230" y="267" font-size="11" font-weight="600" text-anchor="middle" fill="#0f172a">known business outcome?</text>
+
+    <line x1="340" y1="257" x2="470" y2="257" stroke="#b91c1c" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+    <text x="405" y="249" font-size="10" text-anchor="middle" fill="#991b1b" font-weight="600">yes</text>
+    <rect x="470" y="230" width="270" height="54" rx="7" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.3"/>
+    <text x="605" y="252" font-size="11" font-weight="700" text-anchor="middle" fill="#991b1b">stop — business_outcome</text>
+    <text x="605" y="267" font-size="10" text-anchor="middle" fill="#991b1b">e.g. "not found", denied, invalid input</text>
+
+    <line x1="230" y1="284" x2="230" y2="326" stroke="#334155" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <text x="245" y="308" font-size="10" fill="#475569">no</text>
+
+    <!-- Row 2: recoverable check -->
+    <rect x="120" y="326" width="220" height="70" rx="7" fill="none" stroke="#0f172a" stroke-width="1.4"/>
+    <text x="230" y="348" font-size="11" font-weight="600" text-anchor="middle" fill="#0f172a">known interstitial, expired</text>
+    <text x="230" y="363" font-size="11" font-weight="600" text-anchor="middle" fill="#0f172a">session, or transient fault?</text>
+    <text x="230" y="383" font-size="9.5" text-anchor="middle" fill="#64748b">(checked in that order)</text>
+
+    <line x1="340" y1="361" x2="470" y2="361" stroke="#15803d" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+    <text x="405" y="353" font-size="10" text-anchor="middle" fill="#166534" font-weight="600">yes</text>
+    <rect x="470" y="326" width="270" height="70" rx="7" fill="#f0fdf4" stroke="#15803d" stroke-width="1.3"/>
+    <text x="605" y="345" font-size="10.5" text-anchor="middle" fill="#166534">dismiss it / re-authenticate + replay</text>
+    <text x="605" y="360" font-size="10.5" text-anchor="middle" fill="#166534">steps 0..i / wait and retry (bounded)</text>
+    <text x="605" y="378" font-size="10" font-weight="700" text-anchor="middle" fill="#166534">→ log recovery event, re-check</text>
+
+    <path d="M 740 340 C 900 340, 900 210, 710 178" fill="none" stroke="#15803d" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#arrowGreen)"/>
+    <text x="900" y="255" font-size="9.5" fill="#166534" text-anchor="middle">loops back to</text>
+    <text x="900" y="268" font-size="9.5" fill="#166534" text-anchor="middle">re-check, same step</text>
+
+    <line x1="230" y1="396" x2="230" y2="438" stroke="#334155" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <text x="245" y="420" font-size="10" fill="#475569">no</text>
+
+    <!-- Row 3: execute -->
+    <rect x="120" y="438" width="220" height="54" rx="7" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.4"/>
+    <text x="230" y="460" font-size="11" font-weight="700" text-anchor="middle" fill="#1e3a8a">run this step</text>
+    <text x="230" y="475" font-size="10" text-anchor="middle" fill="#1e3a8a">(click / fill / select / extract / navigate)</text>
+
+    <line x1="340" y1="465" x2="470" y2="465" stroke="#c2410c" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <text x="405" y="457" font-size="10" text-anchor="middle" fill="#9a3412" font-weight="600">locator fails</text>
+    <rect x="470" y="438" width="270" height="54" rx="7" fill="#fff7ed" stroke="#c2410c" stroke-width="1.3"/>
+    <text x="605" y="460" font-size="11" font-weight="700" text-anchor="middle" fill="#9a3412">stop — hard_failure</text>
+    <text x="605" y="475" font-size="10" text-anchor="middle" fill="#9a3412">screenshot + step / expected / observed</text>
+
+    <path d="M 230 492 C 230 540, 40 540, 40 260 C 40 240, 60 230, 120 230" fill="none" stroke="#334155" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+    <text x="55" y="380" font-size="9.5" fill="#475569" text-anchor="middle" transform="rotate(-90 55 380)">step ok, more steps remain → next step</text>
+
+    <line x1="605" y1="492" x2="605" y2="534" stroke="#334155" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <text x="620" y="516" font-size="10" fill="#475569">last step done</text>
+
+    <!-- final checkpoint -->
+    <rect x="470" y="534" width="270" height="60" rx="7" fill="#eff6ff" stroke="#1d4ed8" stroke-width="1.4"/>
+    <text x="605" y="557" font-size="11" font-weight="700" text-anchor="middle" fill="#1e3a8a">verify successCheckpoint</text>
+    <text x="605" y="573" font-size="10" text-anchor="middle" fill="#1e3a8a">met → success + outputs · unmet → hard_failure</text>
+  </g>
+
+  <!-- ================= BOTTOM: escalation control handoff ================= -->
+  <text x="24" y="650" font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="12" font-weight="700" fill="#0f172a">Escalation — same function whether discovery is stuck or replay hits a risky/unrecoverable step</text>
+
+  <g font-family="'Segoe UI',Helvetica,Arial,sans-serif" font-size="11">
+    <circle cx="220" cy="710" r="42" fill="none" stroke="#334155" stroke-width="1.6"/>
+    <text x="220" y="706" text-anchor="middle" font-weight="700" fill="#0f172a">agent</text>
+    <text x="220" y="720" text-anchor="middle" font-size="9.5" fill="#475569">driving the page</text>
+
+    <circle cx="480" cy="710" r="42" fill="none" stroke="#b91c1c" stroke-width="1.6"/>
+    <text x="480" y="706" text-anchor="middle" font-weight="700" fill="#991b1b">human</text>
+    <text x="480" y="720" text-anchor="middle" font-size="9.5" fill="#991b1b">same live browser</text>
+
+    <path d="M 262 694 C 330 670, 400 670, 438 694" fill="none" stroke="#b91c1c" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+    <text x="350" y="665" text-anchor="middle" fill="#991b1b" font-weight="600" font-size="10.5">stuck / risky step → raiseIntervention()</text>
+
+    <path d="M 438 726 C 400 750, 330 750, 262 726" fill="none" stroke="#15803d" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+    <text x="350" y="756" text-anchor="middle" fill="#166534" font-weight="600" font-size="10.5">resume → same session continues</text>
+
+    <text x="600" y="700" fill="#334155" font-size="10">no fresh session is created for the handoff —</text>
+    <text x="600" y="716" fill="#334155" font-size="10">the same browser window changes hands, and the</text>
+    <text x="600" y="732" fill="#334155" font-size="10">reason, a screenshot, and the operator's notes are</text>
+    <text x="600" y="748" fill="#334155" font-size="10">written to evidence/ on both sides of the pause.</text>
+  </g>
+</svg>

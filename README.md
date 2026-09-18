@@ -2,7 +2,9 @@
 
 A discover-once, replay-many automation system for legacy back-office UIs that have no API: an LLM figures out a task once against a live surface, that run is recorded as a typed, versioned **capability**, and the capability then replays deterministically — no model in the loop — with a real error taxonomy and a human-escalation path for anything it can't safely handle alone.
 
-See [REPORT.md](./REPORT.md) for the design write-up (architecture, artifact schema, error handling, heterogeneity/multi-tenant story, escalation, safety, and cuts).
+![Architecture](./docs/architecture.svg)
+
+See [REPORT.md](./REPORT.md) for the full design write-up (architecture, artifact schema, error handling, heterogeneity/multi-tenant story, escalation, safety, and cuts).
 
 ## Requirements
 
@@ -84,10 +86,13 @@ npm run invoke -- --capability <capability-name-or-id> --param memberId=12345 --
 **5. Cross-tenant reuse** (stretch goal): generate an override for the same capability against `tenant-b`, whose "Open Sub-Account" button is labeled differently, then replay against it without re-recording:
 
 ```bash
-npm run build -- # (compiles; or use tsx directly, see package.json)
 npx tsx src/cli/index.ts generate-override --capability <capability-id> --for-tenant tenant-b
 npm run replay -- --capability <capability-id> --for-tenant tenant-b --param memberId=12345 --param depositAmount=500
 ```
+
+## Troubleshooting
+
+- **Groq rate limits (429) during discovery**: the free/on-demand tier has a low tokens-per-minute ceiling, and this loop resends the full growing conversation each turn, so a multi-step discovery run can legitimately hit it. `discover` retries automatically, honoring the API's own `retry-after` — a single run can pause for anywhere from a few seconds up to several minutes if you've been running discovery repeatedly against the same key. This is expected, not a bug; just let it retry.
 
 ## Human escalation / handoff
 

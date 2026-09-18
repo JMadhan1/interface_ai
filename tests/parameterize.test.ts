@@ -59,4 +59,22 @@ describe("parameterize", () => {
     const fillStep = result.steps.find((s) => s.action === "fill");
     expect((fillStep as any).value).toBe("12345");
   });
+
+  // Regression: a param spec whose literal value never actually appears in
+  // any step (e.g. the discovery goal mentioned "Holiday Club" but the LLM
+  // never had to select it because the form already defaulted to it) used
+  // to still get declared as a required input param — a caller would be
+  // forced to supply a value that the capability silently ignores. The
+  // contract should never claim to need something it doesn't use.
+  it("does not declare an input param that was never substituted into any step", () => {
+    const result = parameterize(cap(), [{ name: "unusedThing", type: "string", required: true, description: "never appears", sensitive: false, literalValue: "not-in-any-step" }]);
+    expect(result.inputParams.find((p) => p.name === "unusedThing")).toBeUndefined();
+  });
+
+  it("still declares a param whose value arrives pre-templated (sensitive fields templated at capture time)", () => {
+    const capWithPreTemplated = cap();
+    (capWithPreTemplated.steps[1] as any).value = "{{password}}";
+    const result = parameterize(capWithPreTemplated, [{ name: "password", type: "string", required: true, description: "login password", sensitive: true, literalValue: "irrelevant-since-already-templated" }]);
+    expect(result.inputParams.find((p) => p.name === "password")).toBeDefined();
+  });
 });

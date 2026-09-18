@@ -4,6 +4,17 @@ import type { ActionStep, LocatorChain } from "../artifact/schema.js";
 import { assertActionTypeAllowed, assertOriginAllowed, classifyRisk, type AllowlistConfig } from "../safety/allowlist.js";
 import { resolveLocatorChain } from "./locate.js";
 
+/**
+ * Normalizes a form-field label into the template/param name used for
+ * sensitive values ("Password" -> "password"). Exported and unit-tested
+ * directly: a mismatch between this and how a capability's input params are
+ * named silently breaks every replay (a caller supplies `password` but the
+ * recorded step looks for `{{Password}}`) with no type error to catch it.
+ */
+export function toParamName(label: string): string {
+  return label.replace(/\s+/g, "").replace(/^./, (c) => c.toLowerCase());
+}
+
 export class ActionError extends Error {
   constructor(
     message: string,
@@ -60,7 +71,7 @@ export class SurfaceDriver {
     const resolved = await resolveLocatorChain(this.page, chain);
     if (!resolved) throw new ActionError(`fill target not found: label="${label}"`, { action: "fill", intent });
     await resolved.locator.fill(value);
-    return { stepId: this.stepId(), action: "fill", locators: chain, value: sensitive ? "{{" + label.replace(/\s+/g, "") + "}}" : value, intent, riskLevel: classifyRisk("fill", this.allowlist), sensitive };
+    return { stepId: this.stepId(), action: "fill", locators: chain, value: sensitive ? `{{${toParamName(label)}}}` : value, intent, riskLevel: classifyRisk("fill", this.allowlist), sensitive };
   }
 
   async selectOption(label: string, value: string, intent: string): Promise<ActionStep> {
