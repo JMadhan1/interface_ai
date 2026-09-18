@@ -15,7 +15,13 @@ The saved capability's `sessionBootstrapStepCount`, `knownInterstitials`, and `b
 
 ## 2. Replay — success path
 
-**`replay_E1PP4WvX/`** — deterministic replay of the capability above, no LLM involved: `memberId=12345` → `savingsBalance: "$4820.55"`, `newAccountId: "SA-KCVJDN"`. Includes the escalation record for the risky-step confirmation gate (`intervention_*.request.json` / `.resolution.json` / before+after screenshots) — replay paused before the first mutating step and required approval before continuing.
+**`replay_E1PP4WvX/`** — deterministic replay of the capability above, no LLM involved: `memberId=12345` → `savingsBalance: "$4820.55"`, `newAccountId: "SA-KCVJDN"`. Includes the escalation record for the risky-step confirmation gate (`intervention_*.request.json` / `.resolution.json` / before+after screenshots) — replay paused before the first mutating step and required approval before continuing:
+
+| Before (automation paused, awaiting approval) | After (operator approved, automation resumed) |
+|---|---|
+| ![before](./replay_E1PP4WvX/intervention_sZ6DqsJJ_before.png) | ![after](./replay_E1PP4WvX/intervention_sZ6DqsJJ_after.png) |
+
+Same live browser window in both frames — not a fresh session.
 
 ## 3. Replay — error / business outcome
 
@@ -25,7 +31,11 @@ The saved capability's `sessionBootstrapStepCount`, `knownInterstitials`, and `b
 
 This is the honest version of "generalizes across tenants," not a cherry-picked success:
 
-- **`replay_GpuGkQpc/`** — first attempt against `tenant-b` with an override that only covered the one button-label drift I'd anticipated (`generate-override`). Hard-failed immediately at the next field ("Member ID" vs tenant-b's "Customer ID") — screenshot included.
+- **`replay_GpuGkQpc/`** — first attempt against `tenant-b` with an override that only covered the one button-label drift I'd anticipated (`generate-override`). Hard-failed immediately at the next field ("Member ID" vs tenant-b's "Customer ID"):
+
+  ![hard failure — field label drift on tenant-b](./replay_GpuGkQpc/hard_failure_step_q-QB-uUU.png)
+
+  This is a real `hard_failure` screenshot, not staged — the exact page the executor was looking at when it gave up and reported exactly which step, expecting what, observing what.
 - **`replay_Kkiy7Nc_/`** — second attempt after fixing that; hard-failed again at the search button ("Look Up Member" vs "Look Up Customer") — same root cause (entity terminology), different control.
 - **`replay_jVObuHzD/`** — after generalizing `generateLabelDriftOverride` to check every locator carrying text for the entity-word drift (not just the one control I'd first noticed), the full flow succeeds against `tenant-b`: `savingsBalance: "$3110.40"` (Dana Whitfield's real tenant-b balance, distinct from Jordan Ellis's tenant-a data), `newAccountId: "SA-S9RCH8"`.
 
