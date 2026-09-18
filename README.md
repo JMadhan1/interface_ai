@@ -45,50 +45,51 @@ This serves `http://localhost:4100`, with tenants `tenant-a` (Meridian Credit Un
 
 ```bash
 GROQ_API_KEY=your_key npm run discover -- \
-  --goal "Log in, look up member 12345, read their savings balance, then open a Holiday Club sub-account with a $500 initial deposit and reach the confirmation screen." \
+  --goal 'Log in with username operator and password operator123. Then look up member 12345, read their savings balance, then open a Holiday Club sub-account for them with a 500 dollar initial deposit and reach the confirmation screen showing the new account ID.' \
   --tenant tenant-a \
+  --model openai/gpt-oss-20b \
   --param memberId=12345 \
   --param accountType="Holiday Club" \
   --param depositAmount=500
 ```
 
-This prints the saved artifact path, e.g. `artifacts/cap_xxxxxxxxxx.v1.json`, and writes a full step-by-step log plus screenshots to `evidence/discover_.../`.
+Use single quotes around `--goal` as shown (not double quotes) — a `$` followed by digits inside a double-quoted string is parsed by the shell as a positional parameter and silently stripped, which is exactly what happened while building this: `"$500"` became `"00"` in one run (see `evidence/README.md`). `--model openai/gpt-oss-20b` is a deliberate recommendation, not just an example: this account's available model list turned out not to include the usual Llama models, and the much larger default (`openai/gpt-oss-120b`) hit Groq's on-demand-tier quota repeatedly during development — see Troubleshooting below.
 
-**3. Replay the resulting artifact deterministically** (no LLM involved):
+This prints the saved artifact path, e.g. `artifacts/cap_xxxxxxxxxx.v1.json`, and writes a step-by-step log to `evidence/discover_.../`. **What the model actually does — which literal values it uses, whether it self-corrects out of a validation error, whether it extracts every value you'd want as an output — varies run to run and isn't fully scripted by the goal text.** `evidence/README.md` documents exactly what happened on the real run behind the capability already included in this repo (`cap_fo6Vf548DW`), including two real bugs it surfaced and how they were fixed, as a concrete worked example you can inspect without spending your own Groq quota.
+
+**3. Replay the resulting artifact deterministically** (no LLM involved) — using the included real capability:
 
 ```bash
+npm run mock-app   # if not already running
+
 npm run replay -- \
-  --capability <capability-id-from-step-2> \
-  --param memberId=12345 \
-  --param depositAmount=500
+  --capability cap_fo6Vf548DW \
+  --param username=operator --param password=operator123 \
+  --param memberId=12345
 ```
 
-Try it against conditions the capability wasn't literally recorded on, to see the error taxonomy in action:
+Try it against a condition the capability wasn't literally recorded on, to see the error taxonomy in action:
 
 ```bash
 # a record that doesn't exist — a legitimate business outcome, not a crash
-npm run replay -- --capability <id> --param memberId=00000 --param depositAmount=500
-
-# a deposit above the confirmation threshold — recovered automatically as a known interstitial
-npm run replay -- --capability <id> --param memberId=12345 --param depositAmount=15000
-
-# a deposit below the minimum — a validation-error business outcome
-npm run replay -- --capability <id> --param memberId=12345 --param depositAmount=5
+npm run replay -- --capability cap_fo6Vf548DW --param username=operator --param password=operator123 --param memberId=00000
 ```
 
 **4. Invoke it the way an AI agent would** (the agent-facing capability interface — a thin wrapper over the same replay engine):
 
 ```bash
 npm run list-capabilities
-npm run invoke -- --capability <capability-name-or-id> --param memberId=12345 --param depositAmount=500
+npm run invoke -- --capability cap_fo6Vf548DW --param username=operator --param password=operator123 --param memberId=12345
 ```
 
-**5. Cross-tenant reuse** (stretch goal): generate an override for the same capability against `tenant-b`, whose "Open Sub-Account" button is labeled differently, then replay against it without re-recording:
+**5. Cross-tenant reuse** (stretch goal): generate an override for the same capability against `tenant-b`, whose UI labels the same controls differently (a button *and* two field/control names, all templated off "Member" vs "Customer" terminology), then replay against it without re-recording:
 
 ```bash
-npx tsx src/cli/index.ts generate-override --capability <capability-id> --for-tenant tenant-b
-npm run replay -- --capability <capability-id> --for-tenant tenant-b --param memberId=12345 --param depositAmount=500
+npx tsx src/cli/index.ts generate-override --capability cap_fo6Vf548DW --for-tenant tenant-b
+npm run replay -- --capability cap_fo6Vf548DW --for-tenant tenant-b --param username=operator --param password=operator123 --param memberId=12345
 ```
+
+`evidence/README.md` §4 shows this one didn't work on the first try either — the override generator initially covered only the one drift I'd noticed, and two more replays surfaced two more, before the override logic was generalized to catch the whole class rather than one control at a time.
 
 ## Troubleshooting
 

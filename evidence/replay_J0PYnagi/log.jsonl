@@ -1,0 +1,10 @@
+{"ts":"2026-09-18T05:36:58.079Z","runId":"replay_J0PYnagi","level":"info","event":"replay_started","capabilityId":"cap_fo6Vf548DW","version":1,"tenantOverride":null,"paramKeys":["username","password","memberId","baseTenant"]}
+{"ts":"2026-09-18T05:36:58.311Z","runId":"replay_J0PYnagi","level":"info","event":"step_ok","i":0,"stepId":"step_jT-tNzSc","action":"navigate"}
+{"ts":"2026-09-18T05:36:58.844Z","runId":"replay_J0PYnagi","level":"warn","event":"intervention_raised","id":"intervention_ILdkXqVq","reason":"Replay is about to perform a mutating (risky) action: \"Enter username\". Approve to continue.","pageUrl":"http://localhost:4100/tenant-a/login"}
+{"ts":"2026-09-18T05:36:58.884Z","runId":"replay_J0PYnagi","level":"info","event":"intervention_resolved","interventionId":"intervention_ILdkXqVq","resumedAt":"2026-09-18T05:36:58.883Z","operatorNotes":"auto-resumed (non-interactive run)","resultingUrl":"http://localhost:4100/tenant-a/login"}
+{"ts":"2026-09-18T05:36:58.907Z","runId":"replay_J0PYnagi","level":"info","event":"step_ok","i":1,"stepId":"step_tp6RvAlo","action":"fill"}
+{"ts":"2026-09-18T05:36:58.931Z","runId":"replay_J0PYnagi","level":"info","event":"step_ok","i":2,"stepId":"step_vkJYILlJ","action":"fill"}
+{"ts":"2026-09-18T05:36:59.038Z","runId":"replay_J0PYnagi","level":"info","event":"step_ok","i":3,"stepId":"step_p4eK__Ot","action":"click"}
+{"ts":"2026-09-18T05:36:59.078Z","runId":"replay_J0PYnagi","level":"info","event":"step_ok","i":4,"stepId":"step_q-QB-uUU","action":"fill"}
+{"ts":"2026-09-18T05:36:59.161Z","runId":"replay_J0PYnagi","level":"info","event":"step_ok","i":5,"stepId":"step_G1q_i2AG","action":"click"}
+{"ts":"2026-09-18T05:36:59.188Z","runId":"replay_J0PYnagi","level":"info","event":"replay_business_outcome","code":"record_not_found"}

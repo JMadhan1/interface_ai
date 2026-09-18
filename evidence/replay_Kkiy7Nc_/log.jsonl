@@ -1,0 +1,9 @@
+{"ts":"2026-09-18T05:38:32.446Z","runId":"replay_Kkiy7Nc_","level":"info","event":"replay_started","capabilityId":"cap_fo6Vf548DW","version":1,"tenantOverride":"tenant-b","paramKeys":["username","password","memberId","baseTenant"]}
+{"ts":"2026-09-18T05:38:32.559Z","runId":"replay_Kkiy7Nc_","level":"info","event":"step_ok","i":0,"stepId":"step_jT-tNzSc","action":"navigate"}
+{"ts":"2026-09-18T05:38:39.186Z","runId":"replay_Kkiy7Nc_","level":"warn","event":"intervention_raised","id":"intervention_uOt8Io22","reason":"Replay is about to perform a mutating (risky) action: \"Enter username\". Approve to continue.","pageUrl":"http://localhost:4100/tenant-b/login"}
+{"ts":"2026-09-18T05:38:39.236Z","runId":"replay_Kkiy7Nc_","level":"info","event":"intervention_resolved","interventionId":"intervention_uOt8Io22","resumedAt":"2026-09-18T05:38:39.235Z","operatorNotes":"auto-resumed (non-interactive run)","resultingUrl":"http://localhost:4100/tenant-b/login"}
+{"ts":"2026-09-18T05:38:39.279Z","runId":"replay_Kkiy7Nc_","level":"info","event":"step_ok","i":1,"stepId":"step_tp6RvAlo","action":"fill"}
+{"ts":"2026-09-18T05:38:39.327Z","runId":"replay_Kkiy7Nc_","level":"info","event":"step_ok","i":2,"stepId":"step_vkJYILlJ","action":"fill"}
+{"ts":"2026-09-18T05:38:39.519Z","runId":"replay_Kkiy7Nc_","level":"info","event":"step_ok","i":3,"stepId":"step_p4eK__Ot","action":"click"}
+{"ts":"2026-09-18T05:38:39.646Z","runId":"replay_Kkiy7Nc_","level":"info","event":"step_ok","i":4,"stepId":"step_q-QB-uUU","action":"fill"}
+{"ts":"2026-09-18T05:38:47.703Z","runId":"replay_Kkiy7Nc_","level":"error","event":"step_failed","i":5,"stepId":"step_G1q_i2AG","error":"locator chain exhausted (click): Search for member"}

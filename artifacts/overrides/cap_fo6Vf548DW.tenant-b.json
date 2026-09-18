@@ -1,0 +1,34 @@
+{
+  "forTenant": "tenant-b",
+  "baseCapabilityId": "cap_fo6Vf548DW",
+  "baseCapabilityVersion": 1,
+  "reason": "Label drift between base tenant \"tenant-a\" and \"tenant-b\" for the same underlying app.",
+  "locatorOverrides": {
+    "step_sH1Vrea5": [
+      {
+        "kind": "role",
+        "role": "button",
+        "name": "Create New Sub-Account",
+        "confidence": 0.9,
+        "rationale": "Tenant \"tenant-b\" labels this control \"Create New Sub-Account\" instead of \"Open Sub-Account\" — same vendor product, different branding copy."
+      }
+    ],
+    "step_q-QB-uUU": [
+      {
+        "kind": "label",
+        "label": "Customer ID",
+        "confidence": 0.9,
+        "rationale": "Tenant \"tenant-b\" calls this entity \"Customer\" instead of \"Member\" — the field label is templated off that terminology."
+      }
+    ],
+    "step_G1q_i2AG": [
+      {
+        "kind": "role",
+        "role": "button",
+        "name": "Look Up Customer",
+        "confidence": 0.9,
+        "rationale": "Tenant \"tenant-b\" calls this entity \"Customer\" instead of \"Member\" — this control's accessible name is templated off that terminology."
+      }
+    ]
+  }
+}

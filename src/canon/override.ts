@@ -42,6 +42,44 @@ export function generateLabelDriftOverride(capability: Capability, forTenant: st
     }
   }
 
+  // Second, distinct drift with the same root cause: any control's visible
+  // copy — a field label OR a button's accessible name — can be templated
+  // off the tenant's terminology ("Member" vs "Customer"), not just the one
+  // button already handled above. Caught incrementally in practice: the
+  // first version of this function covered only the "Open Sub-Account"
+  // button; replaying against tenant-b then hard-failed at the "Member ID"
+  // field (a `label` locator), and after fixing that, hard-failed *again*
+  // at the "Look Up Member" search button (a `role` locator) — both are the
+  // same underlying drift, so this checks every locator kind that carries
+  // text, once, rather than accumulating more one-off cases.
+  if (baseTenant.entityLabel !== targetTenant.entityLabel) {
+    const wordBoundary = new RegExp(`\\b${baseTenant.entityLabel}\\b`);
+    for (const step of capability.steps) {
+      if (!("locators" in step) || locatorOverrides[step.stepId]) continue;
+      const primary = step.locators[0];
+      if (primary?.kind === "label" && wordBoundary.test(primary.label)) {
+        locatorOverrides[step.stepId] = [
+          {
+            kind: "label",
+            label: primary.label.replace(wordBoundary, targetTenant.entityLabel),
+            confidence: 0.9,
+            rationale: `Tenant "${forTenant}" calls this entity "${targetTenant.entityLabel}" instead of "${baseTenant.entityLabel}" — the field label is templated off that terminology.`,
+          },
+        ];
+      } else if (primary?.kind === "role" && wordBoundary.test(primary.name)) {
+        locatorOverrides[step.stepId] = [
+          {
+            kind: "role",
+            role: primary.role,
+            name: primary.name.replace(wordBoundary, targetTenant.entityLabel),
+            confidence: 0.9,
+            rationale: `Tenant "${forTenant}" calls this entity "${targetTenant.entityLabel}" instead of "${baseTenant.entityLabel}" — this control's accessible name is templated off that terminology.`,
+          },
+        ];
+      }
+    }
+  }
+
   return {
     forTenant,
     baseCapabilityId: capability.id,

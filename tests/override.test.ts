@@ -20,11 +20,27 @@ function capWithOpenSubAccountClick(): Capability {
     inputParams: [],
     steps: [
       {
+        stepId: "s_fill_member_id",
+        action: "fill",
+        intent: "enter member id",
+        riskLevel: "risky",
+        locators: [{ kind: "label", label: "Member ID", confidence: 0.9, rationale: "r" }],
+        value: "{{memberId}}",
+        sensitive: false,
+      },
+      {
         stepId: "s_click_open",
         action: "click",
         intent: "open the new sub-account form",
         riskLevel: "safe",
         locators: [{ kind: "role", role: "button", name: "Open Sub-Account", confidence: 0.9, rationale: "r" }],
+      },
+      {
+        stepId: "s_click_search",
+        action: "click",
+        intent: "search for the member",
+        riskLevel: "safe",
+        locators: [{ kind: "role", role: "button", name: "Look Up Member", confidence: 0.9, rationale: "r" }],
       },
     ],
     sessionBootstrapStepCount: 0,
@@ -49,5 +65,17 @@ describe("generateLabelDriftOverride", () => {
     cap.provenance.baseTenant = "tenant-a";
     const override = generateLabelDriftOverride(cap, "tenant-a");
     expect(Object.keys(override.locatorOverrides)).toHaveLength(0);
+  });
+
+  it("also overrides field labels templated off entity terminology (Member -> Customer), not just the button", () => {
+    const override = generateLabelDriftOverride(capWithOpenSubAccountClick(), "tenant-b");
+    expect(override.locatorOverrides["s_fill_member_id"]).toBeDefined();
+    expect((override.locatorOverrides["s_fill_member_id"]![0] as any).label).toBe("Customer ID");
+  });
+
+  it("also overrides a role-based control name templated off entity terminology (Look Up Member -> Look Up Customer)", () => {
+    const override = generateLabelDriftOverride(capWithOpenSubAccountClick(), "tenant-b");
+    expect(override.locatorOverrides["s_click_search"]).toBeDefined();
+    expect((override.locatorOverrides["s_click_search"]![0] as any).name).toBe("Look Up Customer");
   });
 });

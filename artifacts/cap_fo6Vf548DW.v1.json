@@ -1,0 +1,319 @@
+{
+  "schemaVersion": "1.0",
+  "id": "cap_fo6Vf548DW",
+  "name": "Log in with username operator and password operator123. T...",
+  "description": "Log in with username operator and password operator123. Then look up member 12345, read their savings balance, then open a Holiday Club sub-account for them with a 00 initial deposit and reach the confirmation screen showing the new account ID.",
+  "version": 1,
+  "provenance": {
+    "goal": "Log in with username operator and password operator123. Then look up member 12345, read their savings balance, then open a Holiday Club sub-account for them with a 00 initial deposit and reach the confirmation screen showing the new account ID.",
+    "targetBaseUrl": "http://localhost:4100/tenant-a",
+    "baseTenant": "tenant-a",
+    "model": "openai/gpt-oss-20b",
+    "discoveryRunId": "discover_ELxVR2GJ",
+    "discoveredAt": "2026-09-18T05:30:22.462Z"
+  },
+  "inputParams": [
+    {
+      "name": "username",
+      "type": "string",
+      "required": true,
+      "description": "Operator login username",
+      "sensitive": true
+    },
+    {
+      "name": "password",
+      "type": "string",
+      "required": true,
+      "description": "Operator login password",
+      "sensitive": true
+    },
+    {
+      "name": "memberId",
+      "type": "number",
+      "required": true,
+      "description": "Business input: memberId",
+      "sensitive": false
+    },
+    {
+      "name": "baseTenant",
+      "type": "string",
+      "required": true,
+      "description": "Which tenant to run against",
+      "sensitive": false
+    }
+  ],
+  "steps": [
+    {
+      "stepId": "step_jT-tNzSc",
+      "intent": "Navigate to http://localhost:4100/tenant-a/login",
+      "riskLevel": "safe",
+      "action": "navigate",
+      "url": "http://localhost:4100/{{baseTenant}}/login"
+    },
+    {
+      "stepId": "step_tp6RvAlo",
+      "intent": "Enter username",
+      "riskLevel": "risky",
+      "action": "fill",
+      "locators": [
+        {
+          "kind": "label",
+          "label": "Username",
+          "confidence": 0.9,
+          "rationale": "<label for> association is standard even on legacy server-rendered forms and survives styling/markup churn."
+        }
+      ],
+      "value": "{{username}}",
+      "sensitive": true
+    },
+    {
+      "stepId": "step_vkJYILlJ",
+      "intent": "Enter password",
+      "riskLevel": "risky",
+      "action": "fill",
+      "locators": [
+        {
+          "kind": "label",
+          "label": "Password",
+          "confidence": 0.9,
+          "rationale": "<label for> association is standard even on legacy server-rendered forms and survives styling/markup churn."
+        }
+      ],
+      "value": "{{password}}",
+      "sensitive": true
+    },
+    {
+      "stepId": "step_p4eK__Ot",
+      "intent": "Submit login form",
+      "riskLevel": "safe",
+      "action": "click",
+      "locators": [
+        {
+          "kind": "role",
+          "role": "button",
+          "name": "Log In",
+          "confidence": 0.9,
+          "rationale": "Accessible role+name is the most stable identifier for interactive controls, independent of markup/CSS."
+        },
+        {
+          "kind": "text",
+          "text": "Log In",
+          "exact": true,
+          "confidence": 0.55,
+          "rationale": "Fallback: exact visible text, in case the role changes but the label doesn't."
+        }
+      ]
+    },
+    {
+      "stepId": "step_q-QB-uUU",
+      "intent": "Enter member ID",
+      "riskLevel": "risky",
+      "action": "fill",
+      "locators": [
+        {
+          "kind": "label",
+          "label": "Member ID",
+          "confidence": 0.9,
+          "rationale": "<label for> association is standard even on legacy server-rendered forms and survives styling/markup churn."
+        }
+      ],
+      "value": "{{memberId}}",
+      "sensitive": false
+    },
+    {
+      "stepId": "step_G1q_i2AG",
+      "intent": "Search for member",
+      "riskLevel": "safe",
+      "action": "click",
+      "locators": [
+        {
+          "kind": "role",
+          "role": "button",
+          "name": "Look Up Member",
+          "confidence": 0.9,
+          "rationale": "Accessible role+name is the most stable identifier for interactive controls, independent of markup/CSS."
+        },
+        {
+          "kind": "text",
+          "text": "Look Up Member",
+          "exact": true,
+          "confidence": 0.55,
+          "rationale": "Fallback: exact visible text, in case the role changes but the label doesn't."
+        }
+      ]
+    },
+    {
+      "stepId": "step_0NXfUT2L",
+      "intent": "Read savings balance",
+      "riskLevel": "safe",
+      "action": "extract",
+      "locators": [
+        {
+          "kind": "adjacentCell",
+          "rowLabelText": "Savings Balance",
+          "cellIndex": 2,
+          "confidence": 0.65,
+          "rationale": "This app renders fields as two-column label/value table rows; finds the exact-text label node, walks to its closest ancestor row, and reads that row's 2nd direct cell."
+        },
+        {
+          "kind": "css",
+          "selector": "xpath=//td[normalize-space(.)=\"Savings Balance\"]/following-sibling::td[1]",
+          "confidence": 0.5,
+          "rationale": "Structural fallback via XPath sibling traversal, independent of table row semantics, for markup that isn't exactly two <td> columns."
+        }
+      ],
+      "outputKey": "savingsBalance",
+      "extractAs": "text"
+    },
+    {
+      "stepId": "step_sH1Vrea5",
+      "intent": "Open sub-account creation",
+      "riskLevel": "safe",
+      "action": "click",
+      "locators": [
+        {
+          "kind": "role",
+          "role": "button",
+          "name": "Open Sub-Account",
+          "confidence": 0.9,
+          "rationale": "Accessible role+name is the most stable identifier for interactive controls, independent of markup/CSS."
+        },
+        {
+          "kind": "text",
+          "text": "Open Sub-Account",
+          "exact": true,
+          "confidence": 0.55,
+          "rationale": "Fallback: exact visible text, in case the role changes but the label doesn't."
+        }
+      ]
+    },
+    {
+      "stepId": "step_HAc6X_oX",
+      "intent": "Enter valid initial deposit",
+      "riskLevel": "risky",
+      "action": "fill",
+      "locators": [
+        {
+          "kind": "label",
+          "label": "Initial Deposit",
+          "confidence": 0.9,
+          "rationale": "<label for> association is standard even on legacy server-rendered forms and survives styling/markup churn."
+        }
+      ],
+      "value": "25",
+      "sensitive": false
+    },
+    {
+      "stepId": "step_k9lsTDMH",
+      "intent": "Submit sub-account with valid deposit",
+      "riskLevel": "safe",
+      "action": "click",
+      "locators": [
+        {
+          "kind": "role",
+          "role": "button",
+          "name": "Submit",
+          "confidence": 0.9,
+          "rationale": "Accessible role+name is the most stable identifier for interactive controls, independent of markup/CSS."
+        },
+        {
+          "kind": "text",
+          "text": "Submit",
+          "exact": true,
+          "confidence": 0.55,
+          "rationale": "Fallback: exact visible text, in case the role changes but the label doesn't."
+        }
+      ]
+    },
+    {
+      "stepId": "step_curated_newAccountId",
+      "intent": "Read the newly created sub-account ID from the confirmation page",
+      "riskLevel": "safe",
+      "action": "extract",
+      "locators": [
+        {
+          "kind": "adjacentCell",
+          "rowLabelText": "New Account ID",
+          "cellIndex": 2,
+          "confidence": 0.65,
+          "rationale": "This app renders fields as two-column label/value table rows; finds the exact-text label node, walks to its closest ancestor row, and reads that row's 2nd direct cell."
+        },
+        {
+          "kind": "css",
+          "selector": "xpath=//td[normalize-space(.)=\"New Account ID\"]/following-sibling::td[1]",
+          "confidence": 0.5,
+          "rationale": "Structural fallback via XPath sibling traversal, independent of table row semantics."
+        }
+      ],
+      "outputKey": "newAccountId",
+      "extractAs": "text"
+    }
+  ],
+  "sessionBootstrapStepCount": 4,
+  "knownInterstitials": [
+    {
+      "id": "large_deposit_confirmation",
+      "description": "Deposits above the standard threshold require an extra confirmation step not on the recorded happy path.",
+      "matchCheckpoint": {
+        "kind": "textPresent",
+        "text": "exceeds the standard threshold"
+      },
+      "dismissAction": {
+        "action": "click",
+        "locators": [
+          {
+            "kind": "role",
+            "role": "button",
+            "name": "Confirm",
+            "confidence": 0.9,
+            "rationale": "Confirmation interstitial exposes a single unambiguous Confirm button."
+          }
+        ]
+      }
+    }
+  ],
+  "businessOutcomes": [
+    {
+      "code": "record_not_found",
+      "description": "No member exists for the given ID — a legitimate lookup result, not a system failure.",
+      "matchCheckpoint": {
+        "kind": "textPresent",
+        "text": "No member found with ID"
+      }
+    },
+    {
+      "code": "permission_denied",
+      "description": "The operator does not have permission to view this member's record.",
+      "matchCheckpoint": {
+        "kind": "textPresent",
+        "text": "do not have permission to view"
+      }
+    },
+    {
+      "code": "validation_error",
+      "description": "The submitted input failed server-side validation (e.g. deposit below minimum).",
+      "matchCheckpoint": {
+        "kind": "textPresent",
+        "text": "must be a number of at least $25"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "savingsBalance",
+      "type": "string",
+      "description": "Extracted value for savingsBalance",
+      "sourceStepId": "step_0NXfUT2L"
+    },
+    {
+      "name": "newAccountId",
+      "type": "string",
+      "description": "The newly created sub-account's ID",
+      "sourceStepId": "step_curated_newAccountId"
+    }
+  ],
+  "successCheckpoint": {
+    "kind": "textPresent",
+    "text": "Sub-account created successfully"
+  }
+}

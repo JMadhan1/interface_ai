@@ -1,0 +1,9 @@
+{
+  "id": "intervention_xeOQzFNR",
+  "raisedAt": "2026-09-18T05:37:15.705Z",
+  "goal": "Log in with username operator and password operator123. Then look up member 12345, read their savings balance, then open a Holiday Club sub-account for them with a 00 initial deposit and reach the confirmation screen showing the new account ID.",
+  "reason": "Replay is about to perform a mutating (risky) action: \"Enter username\". Approve to continue.",
+  "pageUrl": "http://localhost:4100/tenant-b/login",
+  "screenshotPath": "evidence/replay_GpuGkQpc/intervention_xeOQzFNR_before.png",
+  "controlState": "human"
+}
