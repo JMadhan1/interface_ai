@@ -1,0 +1,15 @@
+{"ts":"2026-09-18T09:43:53.088Z","runId":"replay_EFJqcaY1","level":"info","event":"replay_started","capabilityId":"cap_fo6Vf548DW","version":1,"tenantOverride":null,"paramKeys":["username","password","memberId","baseTenant"]}
+{"ts":"2026-09-18T09:43:53.174Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":0,"stepId":"step_jT-tNzSc","action":"navigate"}
+{"ts":"2026-09-18T09:43:59.392Z","runId":"replay_EFJqcaY1","level":"warn","event":"remote_intervention_raised","id":"intervention_6T-4OVqX","reason":"Replay is about to perform a mutating (risky) action: \"Enter username\". Approve to continue.","cdpEndpoint":"http://localhost:44644"}
+{"ts":"2026-09-18T09:44:17.557Z","runId":"replay_EFJqcaY1","level":"info","event":"remote_intervention_resolved","interventionId":"intervention_6T-4OVqX","resumedAt":"2026-09-18T09:44:16.761Z","operatorNotes":"Verified same live session via CDP, no action needed, resuming automation","resultingUrl":"http://localhost:4100/tenant-a/login"}
+{"ts":"2026-09-18T09:44:17.603Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":1,"stepId":"step_tp6RvAlo","action":"fill"}
+{"ts":"2026-09-18T09:44:17.635Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":2,"stepId":"step_vkJYILlJ","action":"fill"}
+{"ts":"2026-09-18T09:44:17.744Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":3,"stepId":"step_p4eK__Ot","action":"click"}
+{"ts":"2026-09-18T09:44:17.819Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":4,"stepId":"step_q-QB-uUU","action":"fill"}
+{"ts":"2026-09-18T09:44:17.870Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":5,"stepId":"step_G1q_i2AG","action":"click"}
+{"ts":"2026-09-18T09:44:17.936Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":6,"stepId":"step_0NXfUT2L","action":"extract"}
+{"ts":"2026-09-18T09:44:18.006Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":7,"stepId":"step_sH1Vrea5","action":"click"}
+{"ts":"2026-09-18T09:44:18.046Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":8,"stepId":"step_HAc6X_oX","action":"fill"}
+{"ts":"2026-09-18T09:44:18.091Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":9,"stepId":"step_k9lsTDMH","action":"click"}
+{"ts":"2026-09-18T09:44:18.130Z","runId":"replay_EFJqcaY1","level":"info","event":"step_ok","i":10,"stepId":"step_curated_newAccountId","action":"extract"}
+{"ts":"2026-09-18T09:44:18.141Z","runId":"replay_EFJqcaY1","level":"info","event":"replay_success","outputs":{"savingsBalance":"$4820.55","newAccountId":"SA-AQ75TK"}}

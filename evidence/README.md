@@ -44,3 +44,13 @@ The override actually used for the successful run is `artifacts/overrides/cap_fo
 ## 5. Multi-run stability signal
 
 **`stability_cap_fo6Vf548DW_1789718211000/stability-report.json`** — the same capability replayed 5 independent times (`npm run stability-check`), headless, unattended (`riskyStepPolicy: "auto"`): 5/5 success, `allIdentical: true`. Per-run duration genuinely varies (1.4s–24.8s — the first run pays Chrome's cold-start cost, the rest don't), which is exactly the kind of real signal a single anecdotal run can't show. This is one real data point, not a claim that the capability is bulletproof — the report format is the artifact; running it against more param combinations and over more time is what would build a real confidence signal (see `REPORT.md` §4, "Detecting drift at scale").
+
+## 6. Remote-operator handoff — a genuinely separate process
+
+**`replay_EFJqcaY1/`** — `npm run replay -- --remote-operator` paused before the first risky step and printed a real command to run in a *second, separate terminal*: `npm run operator-attach -- --request ...`. That second process connected independently over Chrome DevTools Protocol (`chromium.connectOverCDP`), found the exact same live page by URL, and confirmed it — the screenshot below was taken by the *operator process*, not the paused one:
+
+![operator process's own view of the paused session](./replay_EFJqcaY1/intervention_6T-4OVqX_operator_view.png)
+
+The operator process then wrote a resolution file, which the still-waiting paused process picked up (it was polling the filesystem, not blocked on its own stdin) and resumed from — completing the full flow: `savingsBalance: "$4820.55"`, `newAccountId: "SA-AQ75TK"`.
+
+Worth stating plainly: the first implementation of this used `chromium.launchServer()` + `chromium.connect()`, and it didn't work — a second `connect()` call genuinely could not see contexts the first process created (`browser.contexts()` came back empty, verified with a standalone debug script before touching the real code). The CDP-based fix above is what actually ran here. See `REPORT.md` §5 for the full account of that wrong turn and why CDP doesn't have the same limitation.

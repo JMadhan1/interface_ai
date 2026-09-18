@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { runDiscovery } from "../agent/loop.js";
-import { launchSurface } from "../surface/browser.js";
+import { launchSurface, launchSurfaceServer, attachToSurface } from "../surface/browser.js";
+import { InterventionRequestSchema, InterventionResolutionSchema } from "../escalation/handoff.js";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createInterface } from "node:readline/promises";
 import { loadAllowlistConfig } from "../safety/allowlist.js";
 import { saveCapability, loadCapability, listCapabilities, saveTenantOverride, loadTenantOverride } from "../artifact/store.js";
 import { parameterize, type ParamSpec } from "../artifact/parameterize.js";
@@ -100,6 +103,7 @@ program
   .option("--param <key=value...>", "input param, e.g. memberId=12345", (v, acc: string[]) => [...acc, v], [])
   .option("--for-tenant <slug>", "replay against a different tenant using a saved override")
   .option("--auto-resume-escalations", "don't block on human input for risky-step confirmation", false)
+  .option("--remote-operator", "hand risky-step confirmation to a separate `operator-attach` process instead of this terminal", false)
   .action(async (opts) => {
     const capability = loadCapability(opts.capability);
     const params = parseParams(opts.param);
@@ -108,6 +112,17 @@ program
 
     const override = opts.forTenant && opts.forTenant !== capability.provenance.baseTenant ? (loadTenantOverride(capability.id, opts.forTenant) ?? undefined) : undefined;
     const allowlist = loadAllowlistConfig();
+
+    if (opts.remoteOperator) {
+      const { page, cdpEndpoint, close } = await launchSurfaceServer();
+      try {
+        const result = await replayCapability({ page, capability, params, allowlist, evidenceDir: "evidence", tenantOverride: override, riskyStepPolicy: "confirm", cdpEndpoint });
+        console.log(`\nReplay result:\n${JSON.stringify(result, null, 2)}`);
+      } finally {
+        await close();
+      }
+      return;
+    }
 
     const { page, close } = await launchSurface();
     try {
@@ -198,6 +213,53 @@ program
     console.log(`  all runs identical outcome: ${report.allIdentical}`);
     for (const r of report.runs) {
       console.log(`  run ${r.runIndex}: ${r.status} (${r.durationMs}ms, ${r.recoveryEventCount} recovery event(s))${r.detail ? ` — ${r.detail}` : ""}`);
+    }
+  });
+
+program
+  .command("operator-attach")
+  .description(
+    "Remote-operator handoff: run in a SEPARATE terminal (or a separate machine on the same network) from `replay --remote-operator`. " +
+      "Connects to the exact live browser a paused run is using via its cdpEndpoint and resolves the intervention."
+  )
+  .requiredOption("--request <path>", "path to the intervention .request.json printed by the paused run")
+  .action(async (opts) => {
+    const request = InterventionRequestSchema.parse(JSON.parse(readFileSync(opts.request, "utf-8")));
+    if (!request.cdpEndpoint) {
+      throw new Error(`this intervention wasn't raised in remote-operator mode (no cdpEndpoint recorded) — rerun replay with --remote-operator`);
+    }
+
+    console.log(`Connecting to the live browser at ${request.cdpEndpoint} ...`);
+    const { browser, close } = await attachToSurface(request.cdpEndpoint);
+    try {
+      const pages = browser.contexts().flatMap((c) => c.pages());
+      const page = pages.find((p) => p.url() === request.pageUrl) ?? pages[0];
+      if (!page) throw new Error("attached to the browser but found no open pages");
+
+      console.log(`Attached. This is the SAME live session the paused run is using — not a fresh one.`);
+      console.log(`Current page: ${page.url()}`);
+      console.log(`Reason automation paused: ${request.reason}`);
+
+      const beforePath = opts.request.replace(/\.request\.json$/, "_operator_view.png");
+      await page.screenshot({ path: beforePath, fullPage: true }).catch(() => {});
+      console.log(`Confirmation screenshot (proves this is the same page): ${beforePath}`);
+
+      const rl = createInterface({ input: process.stdin, output: process.stdout });
+      const operatorNotes = await rl.question("Take any action needed on the page above, then describe what you did and press Enter to resume automation: ");
+      rl.close();
+
+      const resolution = {
+        interventionId: request.id,
+        resumedAt: new Date().toISOString(),
+        operatorNotes: operatorNotes || "(no notes provided)",
+        resultingUrl: page.url(),
+      };
+      InterventionResolutionSchema.parse(resolution);
+      const resolutionPath = opts.request.replace(/\.request\.json$/, ".resolution.json");
+      writeFileSync(resolutionPath, JSON.stringify(resolution, null, 2));
+      console.log(`Wrote ${resolutionPath} — the paused run will pick this up and resume.`);
+    } finally {
+      await close();
     }
   });
 

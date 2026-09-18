@@ -129,6 +129,20 @@ npm run stability-check -- --capability cap_fo6Vf548DW --runs 5 --param username
 
 Writes `stability-report.json` (per-run status, duration, recovery-event count, and a success rate) to `evidence/stability_.../`. See `evidence/README.md` §5 for a real run's numbers.
 
+**7 — Remote-operator handoff**: escalation from a genuinely *separate process*, not just this terminal. In one terminal:
+
+```bash
+npm run replay -- --capability cap_fo6Vf548DW --param username=operator --param password=operator123 --param memberId=12345 --remote-operator
+```
+
+It pauses and prints a command — run that in a **second terminal**:
+
+```bash
+npm run operator-attach -- --request evidence/replay_.../intervention_....request.json
+```
+
+The second process connects to the exact same live browser over Chrome DevTools Protocol, confirms it's looking at the same page (with its own screenshot), and resolving it there resumes the first process. See `evidence/README.md` §6 and `REPORT.md` §5.
+
 ## Troubleshooting
 
 - **Groq rate limits (429) during discovery** — the free/on-demand tier has a low tokens-per-minute ceiling, and this loop resends the full growing conversation each turn, so a multi-step discovery run can legitimately hit it. `discover` retries automatically, honoring the API's own `retry-after` — a single run can pause anywhere from a few seconds to several minutes if you've been running discovery repeatedly against the same key. This is expected, not a bug; just let it retry.
@@ -136,6 +150,8 @@ Writes `stability-report.json` (per-run status, duration, recovery-event count, 
 ## Human escalation / handoff
 
 The browser runs headful on purpose. When discovery gets stuck (`request_human`, repeated failures, or a step budget exceeded) or replay hits a risky step or an unrecoverable condition, automation pauses, prints an intervention record under `evidence/.../*.request.json`, and prompts in the terminal — take control of the visible Chrome window directly, then press Enter to hand control back. Pass `--auto-resume-escalations` to skip the interactive prompt for non-interactive/CI runs (used for the risky-step confirmation gate specifically).
+
+There's also a **remote-operator path** (`replay --remote-operator` + `npm run operator-attach`) where a genuinely separate process attaches to the same live browser over Chrome DevTools Protocol instead of blocking this one's own terminal — see step 7 in the demo path above.
 
 ## Project layout
 
@@ -149,7 +165,7 @@ src/safety/       allowlist enforcement, risk classification, redaction
 src/escalation/   human-in-the-loop handoff (same live session)
 src/capabilities/ agent-facing capability catalog + invoke-by-name
 src/canon/        cross-tenant locator-override generation
-src/cli/          discover | replay | invoke | list-capabilities | generate-override | stability-check
+src/cli/          discover | replay | invoke | list-capabilities | generate-override | stability-check | operator-attach
 tests/            unit tests (no browser required)
 evidence/         real discovery + replay run logs/screenshots (see REPORT.md)
 ```

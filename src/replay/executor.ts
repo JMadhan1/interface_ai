@@ -7,7 +7,7 @@ import { resolveLocatorChain } from "../surface/locate.js";
 import { evaluateCheckpoint } from "./checkpoint.js";
 import { HARD_SERVER_ERROR_MARKER, SESSION_EXPIRED_MARKER, TRANSIENT_UNAVAILABLE_MARKER } from "./known-conditions.js";
 import { RunLogger } from "../logging/logger.js";
-import { raiseIntervention } from "../escalation/handoff.js";
+import { raiseIntervention, raiseRemoteIntervention } from "../escalation/handoff.js";
 
 export interface RecoveryEvent {
   kind: "known_interstitial" | "session_timeout" | "transient_retry";
@@ -32,6 +32,8 @@ export async function replayCapability(opts: {
   tenantOverride?: TenantOverride;
   riskyStepPolicy?: "auto" | "confirm";
   autoResumeEscalations?: boolean;
+  /** When set, risky-step confirmation is handed to a genuinely separate operator process over Chrome DevTools Protocol instead of this process's own terminal — see src/escalation/handoff.ts and src/surface/browser.ts. */
+  cdpEndpoint?: string;
 }): Promise<ReplayResult> {
   const runId = `replay_${nanoid(8)}`;
   const evidenceDir = `${opts.evidenceDir}/${runId}`;
@@ -123,14 +125,12 @@ export async function replayCapability(opts: {
     if (preStepResult) return preStepResult;
 
     if (step.riskLevel === "risky" && !riskyConfirmed) {
-      await raiseIntervention({
-        reason: `Replay is about to perform a mutating (risky) action: "${step.intent}". Approve to continue.`,
-        goal: cap.description,
-        page: opts.page,
-        evidenceDir,
-        logger,
-        autoResume: opts.autoResumeEscalations,
-      });
+      const reason = `Replay is about to perform a mutating (risky) action: "${step.intent}". Approve to continue.`;
+      if (opts.cdpEndpoint) {
+        await raiseRemoteIntervention({ reason, goal: cap.description, page: opts.page, cdpEndpoint: opts.cdpEndpoint, evidenceDir, logger });
+      } else {
+        await raiseIntervention({ reason, goal: cap.description, page: opts.page, evidenceDir, logger, autoResume: opts.autoResumeEscalations });
+      }
       riskyConfirmed = true;
     }
 

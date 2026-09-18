@@ -13,6 +13,7 @@
     "invoke": "tsx --env-file-if-exists=.env src/cli/index.ts invoke",
     "list-capabilities": "tsx src/cli/index.ts list-capabilities",
     "stability-check": "tsx src/cli/index.ts stability-check",
+    "operator-attach": "tsx src/cli/index.ts operator-attach",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
