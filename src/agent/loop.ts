@@ -33,7 +33,7 @@ export async function runDiscovery(opts: {
 }): Promise<DiscoveryResult> {
   const runId = `discover_${nanoid(8)}`;
   const logger = new RunLogger(`${opts.evidenceDir}/${runId}/log.jsonl`, runId);
-  const model = opts.model ?? "openai/gpt-oss-120b";
+  const model = opts.model ?? "openai/gpt-oss-20b"; // see README "Troubleshooting" — the 120b default hit this account's on-demand quota repeatedly in practice
   const maxSteps = opts.maxSteps ?? 25;
   const groq = new Groq({ apiKey: opts.groqApiKey });
   const driver = new SurfaceDriver(opts.page, opts.allowlist);

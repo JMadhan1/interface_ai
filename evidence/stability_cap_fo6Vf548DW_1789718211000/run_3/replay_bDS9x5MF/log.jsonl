@@ -1,0 +1,13 @@
+{"ts":"2026-09-18T07:57:27.429Z","runId":"replay_bDS9x5MF","level":"info","event":"replay_started","capabilityId":"cap_fo6Vf548DW","version":1,"tenantOverride":null,"paramKeys":["username","password","memberId","baseTenant"]}
+{"ts":"2026-09-18T07:57:27.535Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":0,"stepId":"step_jT-tNzSc","action":"navigate"}
+{"ts":"2026-09-18T07:57:27.609Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":1,"stepId":"step_tp6RvAlo","action":"fill"}
+{"ts":"2026-09-18T07:57:27.649Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":2,"stepId":"step_vkJYILlJ","action":"fill"}
+{"ts":"2026-09-18T07:57:28.021Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":3,"stepId":"step_p4eK__Ot","action":"click"}
+{"ts":"2026-09-18T07:57:29.520Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":4,"stepId":"step_q-QB-uUU","action":"fill"}
+{"ts":"2026-09-18T07:57:29.593Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":5,"stepId":"step_G1q_i2AG","action":"click"}
+{"ts":"2026-09-18T07:57:29.630Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":6,"stepId":"step_0NXfUT2L","action":"extract"}
+{"ts":"2026-09-18T07:57:31.253Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":7,"stepId":"step_sH1Vrea5","action":"click"}
+{"ts":"2026-09-18T07:57:31.338Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":8,"stepId":"step_HAc6X_oX","action":"fill"}
+{"ts":"2026-09-18T07:57:31.485Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":9,"stepId":"step_k9lsTDMH","action":"click"}
+{"ts":"2026-09-18T07:57:31.564Z","runId":"replay_bDS9x5MF","level":"info","event":"step_ok","i":10,"stepId":"step_curated_newAccountId","action":"extract"}
+{"ts":"2026-09-18T07:57:31.596Z","runId":"replay_bDS9x5MF","level":"info","event":"replay_success","outputs":{"savingsBalance":"$4820.55","newAccountId":"SA-SB6OXN"}}

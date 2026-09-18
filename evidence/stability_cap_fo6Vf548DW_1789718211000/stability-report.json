@@ -1,0 +1,48 @@
+{
+  "capabilityId": "cap_fo6Vf548DW",
+  "capabilityVersion": 1,
+  "totalRuns": 5,
+  "statusCounts": {
+    "success": 5
+  },
+  "successRate": 1,
+  "allIdentical": true,
+  "runs": [
+    {
+      "runIndex": 0,
+      "status": "success",
+      "stepsExecuted": 11,
+      "recoveryEventCount": 0,
+      "durationMs": 24805
+    },
+    {
+      "runIndex": 1,
+      "status": "success",
+      "stepsExecuted": 11,
+      "recoveryEventCount": 0,
+      "durationMs": 1376
+    },
+    {
+      "runIndex": 2,
+      "status": "success",
+      "stepsExecuted": 11,
+      "recoveryEventCount": 0,
+      "durationMs": 6549
+    },
+    {
+      "runIndex": 3,
+      "status": "success",
+      "stepsExecuted": 11,
+      "recoveryEventCount": 0,
+      "durationMs": 4170
+    },
+    {
+      "runIndex": 4,
+      "status": "success",
+      "stepsExecuted": 11,
+      "recoveryEventCount": 0,
+      "durationMs": 8117
+    }
+  ],
+  "generatedAt": "2026-09-18T07:57:41.479Z"
+}

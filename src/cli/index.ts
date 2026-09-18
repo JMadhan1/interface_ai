@@ -11,6 +11,7 @@ import { listCapabilityCatalog, invokeCapability } from "../capabilities/registr
 import { generateLabelDriftOverride } from "../canon/override.js";
 import { TENANTS } from "../../mock-app/tenants.js";
 import { RateLimitBackoffTooLong } from "../agent/loop.js";
+import { runStabilityCheck } from "../replay/stability.js";
 
 const program = new Command();
 program.name("capability-cli").description("Discover, replay, and invoke computer-use capabilities.");
@@ -30,7 +31,7 @@ program
   .requiredOption("--goal <text>", "natural language goal")
   .option("--tenant <slug>", "target tenant", "tenant-a")
   .option("--base-url <url>", "mock app base URL", "http://localhost:4100")
-  .option("--model <model>", "Groq model id", "openai/gpt-oss-120b")
+  .option("--model <model>", "Groq model id", "openai/gpt-oss-20b")
   .option("--max-steps <n>", "max discovery steps", "25")
   .option("--param <key=value...>", "literal->param name mapping to parameterize, e.g. memberId=12345", (v, acc: string[]) => [...acc, v], [])
   .option("--auto-resume-escalations", "don't block on human input if the agent escalates (for CI)", false)
@@ -164,6 +165,40 @@ program
     const path = saveTenantOverride(override);
     console.log(`Saved override: ${path}`);
     console.log(JSON.stringify(override, null, 2));
+  });
+
+program
+  .command("stability-check")
+  .description("Replay a capability N times and report a pass/fail stability signal (brief §8 stretch goal).")
+  .requiredOption("--capability <idOrPath>")
+  .option("--param <key=value...>", "input param, e.g. memberId=12345", (v, acc: string[]) => [...acc, v], [])
+  .option("--for-tenant <slug>", "run against a different tenant using a saved override")
+  .option("--runs <n>", "number of independent replay runs", "5")
+  .action(async (opts) => {
+    const capability = loadCapability(opts.capability);
+    const params = parseParams(opts.param);
+    if (opts.forTenant) params.baseTenant = opts.forTenant;
+    else params.baseTenant ??= capability.provenance.baseTenant;
+
+    const override = opts.forTenant && opts.forTenant !== capability.provenance.baseTenant ? (loadTenantOverride(capability.id, opts.forTenant) ?? undefined) : undefined;
+    const allowlist = loadAllowlistConfig();
+
+    const report = await runStabilityCheck({
+      capability,
+      params,
+      allowlist,
+      evidenceDir: `evidence/stability_${capability.id}_${Date.now()}`,
+      runs: Number(opts.runs),
+      tenantOverride: override,
+    });
+
+    console.log(`\nStability report (${report.totalRuns} runs, capability ${report.capabilityId} v${report.capabilityVersion}):`);
+    console.log(`  success rate: ${(report.successRate * 100).toFixed(0)}%`);
+    console.log(`  status distribution: ${JSON.stringify(report.statusCounts)}`);
+    console.log(`  all runs identical outcome: ${report.allIdentical}`);
+    for (const r of report.runs) {
+      console.log(`  run ${r.runIndex}: ${r.status} (${r.durationMs}ms, ${r.recoveryEventCount} recovery event(s))${r.detail ? ` — ${r.detail}` : ""}`);
+    }
   });
 
 program.parseAsync(process.argv).catch((err) => {

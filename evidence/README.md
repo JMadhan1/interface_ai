@@ -30,3 +30,7 @@ This is the honest version of "generalizes across tenants," not a cherry-picked 
 - **`replay_jVObuHzD/`** — after generalizing `generateLabelDriftOverride` to check every locator carrying text for the entity-word drift (not just the one control I'd first noticed), the full flow succeeds against `tenant-b`: `savingsBalance: "$3110.40"` (Dana Whitfield's real tenant-b balance, distinct from Jordan Ellis's tenant-a data), `newAccountId: "SA-S9RCH8"`.
 
 The override actually used for the successful run is `artifacts/overrides/cap_fo6Vf548DW.tenant-b.json`. See `REPORT.md` §4 for the design discussion of why this is a small, explainable heuristic rather than a generic UI-diffing engine.
+
+## 5. Multi-run stability signal
+
+**`stability_cap_fo6Vf548DW_1789718211000/stability-report.json`** — the same capability replayed 5 independent times (`npm run stability-check`), headless, unattended (`riskyStepPolicy: "auto"`): 5/5 success, `allIdentical: true`. Per-run duration genuinely varies (1.4s–24.8s — the first run pays Chrome's cold-start cost, the rest don't), which is exactly the kind of real signal a single anecdotal run can't show. This is one real data point, not a claim that the capability is bulletproof — the report format is the artifact; running it against more param combinations and over more time is what would build a real confidence signal (see `REPORT.md` §4, "Detecting drift at scale").

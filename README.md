@@ -1,5 +1,7 @@
 # Computer-Use Automation System
 
+[![CI](https://github.com/JMadhan1/interface_ai/actions/workflows/ci.yml/badge.svg)](https://github.com/JMadhan1/interface_ai/actions/workflows/ci.yml)
+
 A discover-once, replay-many automation system for legacy back-office UIs that have no API: an LLM figures out a task once against a live surface, that run is recorded as a typed, versioned **capability**, and the capability then replays deterministically — no model in the loop — with a real error taxonomy and a human-escalation path for anything it can't safely handle alone.
 
 ![Architecture](./docs/architecture.svg)
@@ -90,6 +92,14 @@ npm run replay -- --capability cap_fo6Vf548DW --for-tenant tenant-b --param user
 ```
 
 `evidence/README.md` §4 shows this one didn't work on the first try either — the override generator initially covered only the one drift I'd noticed, and two more replays surfaced two more, before the override logic was generalized to catch the whole class rather than one control at a time.
+
+**6. Stability signal** (stretch goal): replay the same capability N times and report a real pass/fail distribution, not a single anecdotal run:
+
+```bash
+npm run stability-check -- --capability cap_fo6Vf548DW --runs 5 --param username=operator --param password=operator123 --param memberId=12345
+```
+
+Writes a `stability-report.json` (per-run status, duration, recovery-event count, and a success rate) to `evidence/stability_.../`. See `evidence/README.md` §5 for a real run's numbers.
 
 ## Troubleshooting
 
