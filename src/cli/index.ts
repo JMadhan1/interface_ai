@@ -10,6 +10,7 @@ import { replayCapability } from "../replay/executor.js";
 import { listCapabilityCatalog, invokeCapability } from "../capabilities/registry.js";
 import { generateLabelDriftOverride } from "../canon/override.js";
 import { TENANTS } from "../../mock-app/tenants.js";
+import { RateLimitBackoffTooLong } from "../agent/loop.js";
 
 const program = new Command();
 program.name("capability-cli").description("Discover, replay, and invoke computer-use capabilities.");
@@ -165,4 +166,11 @@ program
     console.log(JSON.stringify(override, null, 2));
   });
 
-program.parseAsync(process.argv);
+program.parseAsync(process.argv).catch((err) => {
+  if (err instanceof RateLimitBackoffTooLong) {
+    console.error(`\n[rate limited] ${err.message}`);
+    console.error(`Groq's on-demand tier ran out of headroom for now. Wait a bit and rerun the same command — discovery has not written a partial/corrupt artifact.`);
+    process.exit(2);
+  }
+  throw err;
+});

@@ -106,12 +106,25 @@ export async function runDiscovery(opts: {
         });
         continue;
       }
-      const outputKeys = Object.keys(args.outputs ?? outputsCollected);
-      const outputs: OutputSpec[] = outputKeys.map((k) => ({
+      // Only promote outputs that are actually backed by a recorded
+      // extract_labeled_value step. The model's `finish` call can name
+      // outputs it merely *read visually* without ever calling extract —
+      // observed in practice: it declared `newAccountId` in its outputs
+      // with no corresponding step, which would silently produce a
+      // missing value on every future replay despite the schema promising
+      // it. A self-reported-but-unbacked output is dropped, not trusted.
+      const unbackedOutputKeys = Object.keys(args.outputs ?? {}).filter((k) => !(k in outputsCollected));
+      if (unbackedOutputKeys.length > 0) {
+        logger.warn("dropped_unbacked_outputs", {
+          keys: unbackedOutputKeys,
+          reason: "declared in finish() without a corresponding extract_labeled_value step",
+        });
+      }
+      const outputs: OutputSpec[] = Object.keys(outputsCollected).map((k) => ({
         name: k,
-        type: typeof (outputsCollected[k] ?? args.outputs?.[k]) === "number" ? "number" : "string",
+        type: typeof outputsCollected[k] === "number" ? "number" : "string",
         description: `Extracted value for ${k}`,
-        sourceStepId: steps.find((s) => s.action === "extract" && s.outputKey === k)?.stepId ?? "unknown",
+        sourceStepId: steps.find((s) => s.action === "extract" && s.outputKey === k)!.stepId,
       }));
       const capability: Capability = {
         schemaVersion: "1.0",
@@ -265,6 +278,22 @@ export function trySynthesizeFinishFromFailedGeneration(err: any): any | null {
   return { choices: [{ message: { role: "assistant", content: null, tool_calls: [toolCall] } }] };
 }
 
+export class RateLimitBackoffTooLong extends Error {
+  constructor(public readonly retryAfterMs: number) {
+    super(`Groq rate limit requires waiting ${Math.ceil(retryAfterMs / 1000)}s, past the ${Math.ceil(MAX_INPROCESS_WAIT_MS / 1000)}s ceiling this process will block for`);
+    this.name = "RateLimitBackoffTooLong";
+  }
+}
+
+// A single process sleeping for minutes at a time is fragile under any
+// supervising process (a CI job, a shell with its own timeout, this very
+// development sandbox — which is exactly what surfaced this: a prior run
+// was killed mid-wait by an external timeout while honoring an 11-minute
+// `retry-after`). Bounding the in-process wait and failing fast past it
+// means the caller decides when to retry, instead of a child process
+// gambling on surviving an arbitrarily long blocking sleep.
+const MAX_INPROCESS_WAIT_MS = 90_000;
+
 /**
  * Groq's free/on-demand tier has a low tokens-per-minute ceiling, and this
  * loop resends the full growing message history every turn — a long
@@ -284,9 +313,14 @@ async function callGroqWithRetry(
       return await groq.chat.completions.create(params);
     } catch (err: any) {
       const status = err?.status;
-      if (status !== 429 || attempt === maxAttempts) throw err;
+      if (status !== 429) throw err;
       const retryAfterHeader = err?.headers?.["retry-after"];
       const waitMs = retryAfterHeader ? Number(retryAfterHeader) * 1000 : Math.min(2000 * 2 ** (attempt - 1), 30000);
+      if (waitMs > MAX_INPROCESS_WAIT_MS) {
+        logger.error("groq_rate_limit_exceeds_wait_ceiling", { attempt, waitMs, ceilingMs: MAX_INPROCESS_WAIT_MS });
+        throw new RateLimitBackoffTooLong(waitMs);
+      }
+      if (attempt === maxAttempts) throw err;
       logger.warn("groq_rate_limited_retrying", { attempt, maxAttempts, waitMs });
       await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
