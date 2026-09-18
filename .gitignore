@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.pdf
+*.log
+evidence/**/raw-screenshots/
+.DS_Store
+npm-debug.log*
+playwright-report/
+test-results/

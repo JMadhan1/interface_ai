@@ -1,0 +1,6 @@
+{
+  "allowedOrigins": ["http://localhost:4100"],
+  "allowedActionTypes": ["navigate", "click", "fill", "select", "waitForText", "extract", "assertCheckpoint"],
+  "riskyActionTypes": ["fill", "select"],
+  "maxStepsPerRun": 40
+}
